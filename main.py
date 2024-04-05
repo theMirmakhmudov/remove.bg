@@ -5,7 +5,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import BufferedInputFile
 import shutil
-from config import TOKEN
+from config import TOKEN, API_KEY
 import requests
 import os
 
@@ -47,7 +47,7 @@ async def cmd_photo(message: types.Message):
         'https://api.remove.bg/v1.0/removebg',
         files={'image_file': open(save_path, 'rb')},
         data={'size': 'auto'},
-        headers={'X-Api-Key': 'PdrqPD5pgievjUhouJjhhf8v'},
+        headers={'X-Api-Key': API_KEY},
     )
     if response.status_code == requests.codes.ok:
         with open('no-bg.png', 'wb') as out:

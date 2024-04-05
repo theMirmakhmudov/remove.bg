@@ -1,10 +1,11 @@
 import requests
+from config import API_KEY
 
 response = requests.post(
     'https://api.remove.bg/v1.0/removebg',
     files={'image_file': open('Mr.Mirmakhmudov logo.jpg', 'rb')},
     data={'size': 'auto'},
-    headers={'X-Api-Key': 'PdrqPD5pgievjUhouJjhhf8v'},
+    headers={'X-Api-Key': API_KEY},
 )
 if response.status_code == requests.codes.ok:
     with open('no-bg.png', 'wb') as out:
