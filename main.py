@@ -4,7 +4,7 @@ from aiogram import Dispatcher, F, types, Bot
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import BufferedInputFile
-
+import shutil
 from config import TOKEN
 import requests
 import os
@@ -61,10 +61,9 @@ async def cmd_photo(message: types.Message):
                     image_from_buffer.read(),
                     filename="example.jpg"
                 ))
+            shutil.rmtree("photos")
 
             file_ids.append(result.photo[-1].file_id)
-            os.remove("photos")
-            os.remove("no-bg.png")
     else:
         print("Error:", response.status_code, response.text)
 
