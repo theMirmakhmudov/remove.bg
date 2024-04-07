@@ -1,13 +1,15 @@
 import asyncio
 import logging
+import os
+import shutil
+
+import requests
 from aiogram import Dispatcher, F, types, Bot
-from aiogram.enums import ParseMode
+from aiogram.enums import ParseMode, MessageEntityType
 from aiogram.filters import Command
 from aiogram.types import BufferedInputFile
-import shutil
+
 from config import TOKEN, API_KEY
-import requests
-import os
 
 dp = Dispatcher()
 bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
@@ -15,7 +17,8 @@ bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer(f"<b>Assalomu Aleykum, Xurmatli {message.from_user.mention_html()}\nRasmni yuboring:</b>")
+    await message.answer(
+        f"<b>Assalomu Aleykum, Xurmatli {message.from_user.mention_html()}\nRasmni url havola yoki file turida yuboring!</b>")
 
 
 @dp.message()
@@ -37,21 +40,48 @@ async def cmd_photo(message: types.Message):
             with open(save_path, 'wb') as f:
                 f.write(response.content)
 
-            await message.answer(f"Rasm muvaffaqiyatli saqlandi: {save_path}")
-        else:
-            await message.answer("Rasmni yuklab olishda xatolik yuz berdi!")
-    else:
-        await message.answer("Habar rasm turi emas!")
+            delete = await message.answer("🔎")
+            await message.delete()
+            await bot.delete_message(chat_id=message.from_user.id, message_id=delete.message_id)
+            response = requests.post(
+                'https://api.remove.bg/v1.0/removebg',
+                files={'image_file': open(save_path, 'rb')},
+                data={'size': 'auto'},
+                headers={'X-Api-Key': API_KEY},
+            )
+            if response.status_code == requests.codes.ok:
+                with open('no-bg.png', 'wb') as out:
+                    out.write(response.content)
 
-    response = requests.post(
-        'https://api.remove.bg/v1.0/removebg',
-        files={'image_file': open(save_path, 'rb')},
-        data={'size': 'auto'},
-        headers={'X-Api-Key': API_KEY},
-    )
-    if response.status_code == requests.codes.ok:
-        with open('no-bg.png', 'wb') as out:
-            out.write(response.content)
+                file_ids = []
+
+                with open("no-bg.png", "rb") as image_from_buffer:
+                    result = await message.answer_photo(
+                        BufferedInputFile(
+                            image_from_buffer.read(),
+                            filename="example.jpg"
+                        ))
+                    shutil.rmtree("photos")
+
+                    file_ids.append(result.photo[-1].file_id)
+        else:
+            await message.answer("<b>Rasmni yuklab olishda xatolik yuz berdi ⛔")
+
+    elif F.entities[:].type == MessageEntityType.URL:
+        delete = await message.answer("🔎")
+        await message.delete()
+        await bot.delete_message(chat_id=message.from_user.id, message_id=delete.message_id)
+        response = requests.post(
+            'https://api.remove.bg/v1.0/removebg',
+            data={
+                'image_url': message.text,
+                'size': 'auto'
+            },
+            headers={'X-Api-Key': API_KEY},
+        )
+        if response.status_code == requests.codes.ok:
+            with open('no-bg.png', 'wb') as out:
+                out.write(response.content)
 
         file_ids = []
 
@@ -64,8 +94,6 @@ async def cmd_photo(message: types.Message):
             shutil.rmtree("photos")
 
             file_ids.append(result.photo[-1].file_id)
-    else:
-        print("Error:", response.status_code, response.text)
 
 
 async def main() -> None:
