@@ -62,10 +62,12 @@ async def cmd_photo(message: types.Message):
                             filename="example.jpg"
                         ))
                     shutil.rmtree("photos")
+                    os.remove("no-bg.png")
 
                     file_ids.append(result.photo[-1].file_id)
         else:
             await message.answer("<b>Rasmni yuklab olishda xatolik yuz berdi ⛔")
+
 
     elif F.entities[:].type == MessageEntityType.URL:
         delete = await message.answer("🔎")
@@ -82,6 +84,8 @@ async def cmd_photo(message: types.Message):
         if response.status_code == requests.codes.ok:
             with open('no-bg.png', 'wb') as out:
                 out.write(response.content)
+        else:
+            await message.answer("Xatolik yuz berdi ⛔")
 
         file_ids = []
 
@@ -92,8 +96,11 @@ async def cmd_photo(message: types.Message):
                     filename="example.jpg"
                 ))
             shutil.rmtree("photos")
+            os.remove("no-bg.png")
 
             file_ids.append(result.photo[-1].file_id)
+    else:
+        await message.answer("Xabar turi xato!")
 
 
 async def main() -> None:
